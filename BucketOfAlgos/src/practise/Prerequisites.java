@@ -23,11 +23,12 @@ public class Prerequisites {
 	}
 
 	public static void main(String... args) {
-		String[] classes = { "CSE258: CSE244 CSE243 INTR100",
-				"CSE221: CSE254 INTR100", "CSE254: CSE111 MATH210 INTR100",
-				"CSE244: CSE243 MATH210 INTR100", "MATH210: INTR100",
-				"CSE101: INTR100", "CSE111: INTR100", "ECE201: CSE111 INTR100",
-				"ECE111: INTR100", "CSE243: CSE254", "INTR100:", };
+//		String[] classes = { "CSE258: CSE244 CSE243 INTR100",
+//				"CSE221: CSE254 INTR100", "CSE254: CSE111 MATH210 INTR100",
+//				"CSE244: CSE243 MATH210 INTR100", "MATH210: INTR100",
+//				"CSE101: INTR100", "CSE111: INTR100", "ECE201: CSE111 INTR100",
+//				"ECE111: INTR100", "CSE243: CSE254", "INTR100:", };
+		String[] classes = {"ECE101: ECE201", "ECE201: ECE101"};
 		String[] out = new Prerequisites().orderClasses(classes);
 		for (String s : out)
 			System.out.println(" " + s);
@@ -36,7 +37,6 @@ public class Prerequisites {
 
 class TopologicalGraph {
 	private boolean[] onStack; // To detect cycle
-	private boolean hasCycle;
 	private boolean[] marked;
 	private Stack<Integer> reversePost;
 	private Digraph G;
@@ -57,25 +57,22 @@ class TopologicalGraph {
 		onStack[v] = true;
 		marked[v] = true;
 		for (int w : G.adj(v)) {
-			if (hasCycle)
-				throw new IllegalArgumentException();
-			else if (!marked[w])
+			if (!marked[w])
 				dfs(G, w);
-			else if (onStack[w])
-				hasCycle = true;
+			else if (onStack[w]){
+				throw new IllegalArgumentException("Cycle Detected!");
+			}
 		}
 		onStack[v] = false;
 		reversePost.push(v);
 	}
 
 	public String[] getOrder() {
-		ArrayList<String> order = new ArrayList<String>();
-		while (!reversePost.empty())
-			order.add(G.getString(reversePost.pop()));
-		String[] ret = new String[order.size()];
-		for (int i = 0; i < order.size(); i++) {
-			ret[i] = order.get(i);
-		}
+		
+		String[] ret = new String[reversePost.size()];
+		int i = 0;
+		for(int v : reversePost)
+			ret[i++] = G.getString(v);
 		return ret;
 	}
 
@@ -125,42 +122,34 @@ class TopologicalGraph {
 			if (splitString.length == 0)
 				throw new IllegalArgumentException("Split on : on " + s
 						+ " was empty");
-			validateStringAndBuildIndex(splitString);
+			if(splitString.length > 1)
+				checkTrailingWhiteSpace(splitString[1]);
+			validateStringAndBuildIndex(splitString[0]);
 			for (String atomic : splitString) {
 				String[] anotherSplit = atomic.split("\\s");
 				for (String s2 : anotherSplit) {
-					if(null == s2 || s2.length() ==0 )
+					if (null == s2 || s2.length() == 0)
 						continue;
+					checkTrailingWhiteSpace(s2);
+					validateStringAndBuildIndex(s2);
 					if (!(splitString[0].compareTo(s2) == 0))
 						addEdge(splitString[0], s2);
 				}
 			}
-
 		}
 
 		private void addEdge(String from, String to) {
 			adj[index.get(from.trim())].add(index.get(to.trim()));
 		}
 
-		private void validateStringAndBuildIndex(String[] splitString) {
+		private void validateStringAndBuildIndex(String atomic) {
 
-			for (String atomic : splitString) {
-				if (null == atomic || atomic.length() == 0)
-					continue;
-				String[] anotherSplit = atomic.split("\\s+");
-				if (anotherSplit.length > 1 || anotherSplit.length == 1
-						&& anotherSplit[0].compareTo(atomic) != 0) {
-					validateStringAndBuildIndex(anotherSplit);
-					continue;
-				}
-				checkTrailingWhiteSpace(atomic);
-				checkDeptNameAndNumber(atomic);
-			    //All is good, hence build indexes
-				if (!index.containsKey(atomic.trim())) {
-					index.put(atomic.trim(), count);
-					invertedIndex.add(count++, atomic.trim()); 
-					V++;
-				}
+			checkDeptNameAndNumber(atomic);
+			// All is good, hence build indexes
+			if (!index.containsKey(atomic.trim())) {
+				index.put(atomic.trim(), count);
+				invertedIndex.add(count++, atomic.trim());
+				V++;
 			}
 		}
 
@@ -193,3 +182,4 @@ class TopologicalGraph {
 	}
 
 }
+//{"INTR100","CSE101","CSE111","ECE111","ECE201","MATH210","CSE254","CSE221","CSE243","CSE244","CSE258"}
