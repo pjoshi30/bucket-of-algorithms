@@ -1,0 +1,1 @@
+Contains implementations of popular sorting/searching/selection/traversal etc. algorithms in Java.
